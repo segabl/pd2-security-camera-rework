@@ -63,10 +63,17 @@ function SecurityCamera:_sound_the_alarm(detected_unit, ...)
 	self:_destroy_all_detected_attention_object_data()
 	self:set_detection_enabled(false, nil, nil)
 	self:_stop_all_sounds()
-	self._upd_sound = function() end
 
+	self:_send_net_event(self._NET_EVENTS.alarm_start)
 	self._alarm_sound = self._unit:sound_source():post_event("camera_alarm_signal")
 
 	local id = "cam_stop_sound" .. tostring(self._unit:key())
 	managers.enemy:add_delayed_clbk(id, callback(self, self, "_stop_all_sounds"), TimerManager:game():time() + 1.5)
+end
+
+local _upd_sound_original = SecurityCamera._upd_sound
+function SecurityCamera:_upd_sound(...)
+	if not self._alerted_op then
+		return _upd_sound_original(self, ...)
+	end
 end
