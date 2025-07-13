@@ -67,4 +67,7 @@ function SecurityCamera:_sound_the_alarm(detected_unit, ...)
 	self._upd_sound = function() end
 
 	self._alarm_sound = self._unit:sound_source():post_event("camera_alarm_signal")
+
+	local id = "cam_stop_sound" .. tostring(self._unit:key())
+	managers.enemy:add_delayed_clbk(id, callback(self, self, "_stop_all_sounds"), TimerManager:game():time() + 1.5)
 end
