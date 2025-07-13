@@ -28,10 +28,17 @@ function SecurityCamera:_sound_the_alarm(detected_unit, ...)
 
 	self._alerted_op = true
 
+	if not operator:movement():cool() then
+		return
+	end
+
 	local brain = operator:brain()
 	local logic_data = brain._logic_data
-	logic_data.forced_police_call_attention = brain._current_logic.identify_attention_obj_instant(logic_data, detected_unit:key())
+
 	brain:set_objective(nil)
+	brain.set_objective = function() end
+	logic_data.forced_police_call_attention = brain._current_logic.identify_attention_obj_instant(logic_data, detected_unit:key())
+	operator:movement():set_cool(false, managers.groupai:state().analyse_giveaway(operator:base()._tweak_table, detected_unit))
 	if brain._logics.arrest then
 		brain:set_logic("arrest")
 		CopLogicArrest._mark_call_in_event(logic_data, logic_data.internal_data, logic_data.forced_police_call_attention)
@@ -40,7 +47,6 @@ function SecurityCamera:_sound_the_alarm(detected_unit, ...)
 		brain:set_logic("flee")
 		CivilianLogicFlee.clbk_chk_call_the_police(nil, logic_data)
 	end
-	brain.set_objective = function() end
 
 	local susp_data = managers.groupai:state()._suspicion_hud_data
 	local obs_susp_data = susp_data and susp_data[self._unit:key()]
@@ -59,4 +65,6 @@ function SecurityCamera:_sound_the_alarm(detected_unit, ...)
 	self:set_detection_enabled(false, nil, nil)
 	self:_stop_all_sounds()
 	self._upd_sound = function() end
+
+	self._alarm_sound = self._unit:sound_source():post_event("camera_alarm_signal")
 end
