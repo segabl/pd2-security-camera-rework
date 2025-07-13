@@ -36,7 +36,6 @@ function SecurityCamera:_sound_the_alarm(detected_unit, ...)
 	local logic_data = brain._logic_data
 
 	brain:set_objective(nil)
-	brain.set_objective = function() end
 	logic_data.forced_police_call_attention = brain._current_logic.identify_attention_obj_instant(logic_data, detected_unit:key())
 	operator:movement():set_cool(false, managers.groupai:state().analyse_giveaway(operator:base()._tweak_table, detected_unit))
 	if brain._logics.arrest then
