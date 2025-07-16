@@ -5,7 +5,7 @@ end
 core:import("CoreElementInstance")
 
 local function check_executed_objects(trigger, current, checked)
-	if checked[current] then
+	if not current or checked[current] then
 		return
 	end
 
