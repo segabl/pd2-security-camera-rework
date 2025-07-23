@@ -28,6 +28,21 @@ function SecurityCamera:_sound_the_alarm(detected_unit, ...)
 
 	self._alerted_op = true
 
+	local susp_data = managers.groupai:state()._suspicion_hud_data
+	local obs_susp_data = susp_data and susp_data[self._unit:key()]
+	if obs_susp_data then
+		if obs_susp_data.icon_id then
+			managers.hud:remove_waypoint(obs_susp_data.icon_id)
+		end
+		if obs_susp_data.icon_id2 then
+			managers.hud:remove_waypoint(obs_susp_data.icon_id2)
+		end
+		susp_data[self._unit:key()] = nil
+		managers.network:session():send_to_peers_synched("suspicion_hud", self._unit, 0)
+	end
+
+	self:set_detection_enabled(false, nil, nil)
+
 	if not operator:movement():cool() then
 		return
 	end
@@ -47,33 +62,9 @@ function SecurityCamera:_sound_the_alarm(detected_unit, ...)
 		CivilianLogicFlee.clbk_chk_call_the_police(nil, logic_data)
 	end
 
-	local susp_data = managers.groupai:state()._suspicion_hud_data
-	local obs_susp_data = susp_data and susp_data[self._unit:key()]
-	if obs_susp_data then
-		if obs_susp_data.icon_id then
-			managers.hud:remove_waypoint(obs_susp_data.icon_id)
-		end
-		if obs_susp_data.icon_id2 then
-			managers.hud:remove_waypoint(obs_susp_data.icon_id2)
-		end
-		susp_data[self._unit:key()] = nil
-		managers.network:session():send_to_peers_synched("suspicion_hud", self._unit, 0)
-	end
-
-	self:_destroy_all_detected_attention_object_data()
-	self:set_detection_enabled(false, nil, nil)
-	self:_stop_all_sounds()
-
 	self:_send_net_event(self._NET_EVENTS.alarm_start)
 	self._alarm_sound = self._unit:sound_source():post_event("camera_alarm_signal")
 
 	local id = "cam_stop_sound" .. tostring(self._unit:key())
 	managers.enemy:add_delayed_clbk(id, callback(self, self, "_stop_all_sounds"), TimerManager:game():time() + 1.5)
-end
-
-local _upd_sound_original = SecurityCamera._upd_sound
-function SecurityCamera:_upd_sound(...)
-	if not self._alerted_op then
-		return _upd_sound_original(self, ...)
-	end
 end
